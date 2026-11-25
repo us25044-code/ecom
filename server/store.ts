@@ -1,0 +1,443 @@
+import fs from 'fs';
+import path from 'path';
+import type {
+  Coupon,
+  Order,
+  Product,
+  ReturnRequest,
+  Review,
+  SiteConfig,
+} from '../src/types.ts';
+
+export interface StoredCustomer {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  passwordHash: string;
+  wishlist: string[];
+  createdAt: string;
+}
+
+export interface StoredPayment {
+  id: string;
+  orderId: string;
+  gateway: 'razorpay';
+  razorpayOrderId: string;
+  razorpayPaymentId?: string;
+  amountPaise: number;
+  currency: string;
+  status: 'created' | 'verified' | 'failed';
+  isTestSimulation?: boolean;
+  createdAt: string;
+}
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface ContactSubmission {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface DatabaseSchema {
+  seedVersion: number;
+  adminPasswordHash: string | null;
+  products: Product[];
+  customers: StoredCustomer[];
+  orders: Order[];
+  payments: StoredPayment[];
+  reviews: Review[];
+  coupons: Coupon[];
+  returnRequests: ReturnRequest[];
+  newsletterSubscribers: NewsletterSubscriber[];
+  contactSubmissions: ContactSubmission[];
+  config: SiteConfig;
+}
+
+const CURRENT_SEED_VERSION = 2;
+const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DB_PATH = path.resolve(DATA_DIR, 'growstep-db.json');
+
+const INDIAN_CHILD_SIZES = [
+  { sizeLabel: 'IND 10', footLengthCm: 16.8, stockQty: 18 },
+  { sizeLabel: 'IND 11', footLengthCm: 17.6, stockQty: 22 },
+  { sizeLabel: 'IND 12', footLengthCm: 18.5, stockQty: 25 },
+  { sizeLabel: 'IND 13', footLengthCm: 19.3, stockQty: 20 },
+  { sizeLabel: 'IND 1', footLengthCm: 20.2, stockQty: 24 },
+  { sizeLabel: 'IND 2', footLengthCm: 21.0, stockQty: 19 },
+  { sizeLabel: 'IND 3', footLengthCm: 21.8, stockQty: 16 },
+  { sizeLabel: 'IND 4', footLengthCm: 22.7, stockQty: 14 },
+];
+
+const DEFAULT_CONFIG: SiteConfig = {
+  heroHeadline: 'School Shoes That Grow With Them.',
+  heroSubheading:
+    'More comfort. More durability. More value for every growing step.',
+  announcementText:
+    'Free standard delivery across India on orders above ₹1,499 · Indian sizes IND 10 to IND 4',
+  shippingFlatRate: 99,
+  freeShippingThreshold: 1499,
+  codEnabled: true,
+  codFee: 0,
+  estimatedDeliveryWindow: '4–6 business days across major Indian cities',
+  returnRewardMinInr: 100,
+  returnRewardMaxInr: 150,
+  returnRewardPartnerStatus:
+    'Proposed programme — recycling & donation partner onboarding in progress',
+  returnWindowDaysConfigurable: '14 days (configurable)',
+  returnPolicyNote:
+    'Policy parameters below are configurable prior to commercial launch and pending final legal & logistics partner sign-off.',
+  supportEmail: 'care@growstep.in (placeholder)',
+  supportPhone: '+91 80 0000 0000 (placeholder)',
+  instagramHandle: '@growstep.footwear (placeholder)',
+  businessAddress:
+    'GrowStep Footwear Studio, Bengaluru, Karnataka, India (placeholder)',
+  sizeChartNote:
+    'Measurements shown follow Indian school footwear sizing (IND 10 to IND 4) as configurable reference values pending final manufacturer last confirmation.',
+};
+
+const DEFAULT_PRODUCTS: Product[] = [
+  {
+    id: 'prod-boys-black',
+    slug: 'boys-black-school-shoe',
+    name: "Boys' Black Lace-Up School Shoe",
+    subtitle: 'Formal Uniform · 4-Eyelet Lace-Up',
+    category: 'boys',
+    color: 'Classic Matte Black',
+    price: 1499,
+    originalPrice: 1799,
+    shortDescription:
+      'Formal black lace-up school shoe engineered with a removable cobalt-blue EVA fitting insert, quick-dry breathable mesh lining, and anti-slip outsole for everyday Indian school wear.',
+    description:
+      'Built for daily school assemblies, classrooms, and playground runs, the Boys’ Black Lace-Up pairs a clean formal uniform profile with GrowStep’s removable blue EVA fitting insert. As your child’s foot grows, removing or replacing the insert frees controlled internal room while keeping the lace-up heel and midfoot secure.',
+    materialsConstruction:
+      'Upper: Water-resistant PU-coated microfibre for formal appearance and wipe-clean maintenance.\nInner Lining: Quick-drying, moisture-managing breathable polyester mesh.\nFootbed: Cushioned grey EVA foam base.\nFit-Adjustment Insert: Engineered die-cut blue EVA adaptive fitting insert.\nToe & Heel: Reinforced toe cap and structured heel counter with black-and-white pull tab.\nOutsole: Non-marking anti-slip rubber/TPR outsole.',
+    adaptiveFitMechanism:
+      'Stage 1: Shoe arrives with the blue EVA fitting insert installed over the grey cushioned footbed for a snug initial fit.\nStage 2: As the child’s foot grows, parents check toe clearance regularly.\nStage 3: Removing or replacing the blue EVA insert opens controlled additional room inside the shoe. Note: Accommodating approximately one additional size is a proposed design capability requiring prototype validation. Always stop wearing if the shoe feels tight.',
+    careInstructions:
+      'Wipe the PU-coated microfibre upper with a damp cloth after muddy or rainy school days. Remove the blue EVA insert and footbed to air-dry naturally in shade—do not machine wash or expose to direct heat.',
+    shippingReturnsSummary:
+      'Configurable standard shipping across India (4–6 business days). Size exchanges and returns follow our configurable store policy.',
+    features: [
+      '4-eyelet secure lace-up closure (non-Velcro)',
+      'Subtle side & vamp ventilation micro-pores',
+      'Removable blue die-cut EVA fitting insert',
+      'Reinforced toe cap & heel counter with striped pull tab',
+      'Quick-dry mesh lining & anti-slip TPR outsole',
+    ],
+    images: [
+      {
+        id: 'boys-1',
+        url: '/assets/aistudio/image_0ae15fd1.png',
+        label: 'Three-Quarter Profile',
+      },
+      {
+        id: 'boys-2',
+        url: '/src/assets/images/boys_cutaway_horizontal_1795632275378.jpg',
+        label: 'Adaptive Fit Cutaway',
+      },
+      {
+        id: 'boys-3',
+        url: '/src/assets/images/boys_top_blue_insert_1795632275667.jpg',
+        label: 'Top View (Blue Insert)',
+      },
+      {
+        id: 'boys-4',
+        url: '/src/assets/images/shoe_rear_heel_oat_1795632277842.jpg',
+        label: 'Rear Heel View',
+      },
+      {
+        id: 'boys-5',
+        url: '/src/assets/images/shoe_outsole_black_1795628344158.jpg',
+        label: 'Outsole Grip',
+      },
+      {
+        id: 'boys-6',
+        url: '/src/assets/images/blue_eva_insert_closeup_1795628273599.jpg',
+        label: 'Blue EVA Insert',
+      },
+      {
+        id: 'boys-7',
+        url: '/src/assets/images/ventilation_pores_closeup_1795628288152.jpg',
+        label: 'Ventilation Pores',
+      },
+    ],
+    sizes: INDIAN_CHILD_SIZES.map((s) => ({ ...s })),
+    isActive: true,
+  },
+  {
+    id: 'prod-girls-black',
+    slug: 'girls-black-mary-jane-shoe',
+    name: "Girls' Black Mary Jane School Shoe",
+    subtitle: 'Formal Uniform · Single Adjustable Strap',
+    category: 'girls',
+    color: 'Classic Matte Black',
+    price: 1399,
+    originalPrice: 1699,
+    shortDescription:
+      'Classic black Mary Jane school shoe with an easy single adjustable strap, subtle vamp ventilation pores, removable blue EVA fitting insert, and monsoon-ready outsole.',
+    description:
+      'Designed to meet Indian school uniform guidelines while supporting growing feet, the Girls’ Black Mary Jane pairs a neat single adjustable strap with a cushioned collar, reinforced toe protection, and our removable blue EVA fitting insert.',
+    materialsConstruction:
+      'Upper: Easy-clean, water-resistant PU-coated microfibre.\nClosure: Single wide adjustable hook-and-loop instep strap for a secure custom fit.\nInner Lining: Quick-drying breathable polyester mesh.\nFootbed & Insert: Cushioned grey EVA footbed paired with removable blue die-cut EVA fitting insert.\nOutsole: Non-marking anti-slip rubber/TPR outsole.',
+    adaptiveFitMechanism:
+      'Stage 1: Start with the blue EVA fitting insert in place for comfortable initial support.\nStage 2: Check fit periodically as your child grows.\nStage 3: Remove or replace the blue EVA insert and readjust the single instep strap for controlled additional room. Target of approximately one additional size is a proposed design capability requiring prototype validation.',
+    careInstructions:
+      'Wipe upper clean with a soft damp cloth. Keep strap hook-and-loop surfaces free of lint. Air-dry removable blue insert and footbed away from direct sunlight.',
+    shippingReturnsSummary:
+      'Configurable standard shipping across India (4–6 business days). Size exchanges and returns follow our configurable store policy.',
+    features: [
+      'Single adjustable Mary Jane instep strap',
+      'Subtle ventilation micro-pores on vamp',
+      'Removable blue die-cut EVA fitting insert',
+      'Reinforced toe cap & heel counter with striped pull tab',
+      'Quick-dry lining & anti-slip TPR outsole',
+    ],
+    images: [
+      {
+        id: 'girls-1',
+        url: '/assets/aistudio/image_5c8c1ded.png',
+        label: 'Three-Quarter Profile',
+      },
+      {
+        id: 'girls-2',
+        url: '/src/assets/images/girls_cutaway_horizontal_1795632276317.jpg',
+        label: 'Adaptive Fit Cutaway',
+      },
+      {
+        id: 'girls-3',
+        url: '/src/assets/images/girls_top_blue_insert_clean_1795632295387.jpg',
+        label: 'Top View (Blue Insert)',
+      },
+      {
+        id: 'girls-4',
+        url: '/src/assets/images/shoe_rear_heel_oat_1795632277842.jpg',
+        label: 'Rear Heel View',
+      },
+      {
+        id: 'girls-5',
+        url: '/src/assets/images/shoe_outsole_black_1795628344158.jpg',
+        label: 'Outsole Grip',
+      },
+      {
+        id: 'girls-6',
+        url: '/src/assets/images/blue_eva_insert_closeup_1795628273599.jpg',
+        label: 'Blue EVA Insert',
+      },
+      {
+        id: 'girls-7',
+        url: '/src/assets/images/ventilation_pores_closeup_1795628288152.jpg',
+        label: 'Ventilation Pores',
+      },
+    ],
+    sizes: INDIAN_CHILD_SIZES.map((s) => ({ ...s })),
+    isActive: true,
+  },
+  {
+    id: 'prod-white-pe',
+    slug: 'unisex-white-pe-school-shoe',
+    name: 'Unisex White PE School Shoe',
+    subtitle: 'Physical Education · Single Adjustable Strap',
+    category: 'pe',
+    color: 'Clean Uniform White',
+    price: 1449,
+    originalPrice: 1749,
+    shortDescription:
+      'Crisp white unisex physical education shoe with an easy single adjustable strap, breathable perforated toe box, quick-dry mesh collar, removable blue EVA fitting insert, and anti-slip outsole.',
+    description:
+      'Engineered for sports periods, PT drills, and active school days, the Unisex White PE School Shoe keeps feet cool with fine vamp perforations and breathable mesh lining while offering quick single-strap fastening, easy wipe-clean maintenance, and GrowStep’s adaptive blue EVA fitting insert.',
+    materialsConstruction:
+      'Upper: Easy-wipe crisp white PU-coated microfibre.\nClosure: Wide single adjustable strap for fast school-morning wear.\nInner Lining: Quick-dry breathable grey polyester mesh for active moisture management.\nFootbed & Insert: Cushioned grey EVA footbed with removable blue die-cut EVA fitting insert.\nOutsole: Non-marking white anti-slip rubber/TPR outsole with multi-directional grip.',
+    adaptiveFitMechanism:
+      'Stage 1: Initial fit with the blue EVA fitting insert installed above the cushioned grey footbed.\nStage 2: Regular parent fit check during growth spurts.\nStage 3: Remove or replace the insert to unlock controlled additional internal space while readjusting the strap for heel security. Proposed capability subject to prototype testing.',
+    careInstructions:
+      'Wipe white PU-coated microfibre upper after playground use with mild soap and a damp cloth. Remove the blue EVA insert to air-dry in shade.',
+    shippingReturnsSummary:
+      'Configurable standard shipping across India (4–6 business days). Size exchanges and returns follow our configurable store policy.',
+    features: [
+      'Clean white unisex uniform strap design',
+      'Breathable micro-perforated toe vamp',
+      'Removable blue die-cut EVA fitting insert',
+      'Cushioned footbed & quick-dry mesh lining',
+      'Non-marking white anti-slip TPR outsole',
+    ],
+    images: [
+      {
+        id: 'pe-1',
+        url: '/assets/aistudio/image_9912ee39.png',
+        label: 'Three-Quarter Profile',
+      },
+      {
+        id: 'pe-2',
+        url: '/src/assets/images/white_unisex_cutaway_1795632275840.jpg',
+        label: 'Adaptive Fit Cutaway',
+      },
+      {
+        id: 'pe-3',
+        url: '/src/assets/images/white_top_blue_insert_1795632277098.jpg',
+        label: 'Top View (Blue Insert)',
+      },
+      {
+        id: 'pe-4',
+        url: '/src/assets/images/white_rear_heel_oat_1795632278478.jpg',
+        label: 'Rear Heel View',
+      },
+      {
+        id: 'pe-5',
+        url: '/src/assets/images/shoe_outsole_white_1795628272357.jpg',
+        label: 'Outsole Grip',
+      },
+      {
+        id: 'pe-6',
+        url: '/src/assets/images/blue_eva_insert_closeup_1795628273599.jpg',
+        label: 'Blue EVA Insert',
+      },
+    ],
+    sizes: INDIAN_CHILD_SIZES.map((s) => ({ ...s })),
+    isActive: true,
+  },
+];
+
+const DEFAULT_REVIEWS: Review[] = [
+  {
+    id: 'rev-sample-1',
+    productId: 'prod-boys-black',
+    productName: "Boys' Black Lace-Up School Shoe",
+    authorName: 'Ananya Deshmukh (Sample)',
+    city: 'Pune',
+    rating: 5,
+    comment:
+      'Sample feedback preview: Having a removable insert makes checking fit midway through the term much easier, and the matte black microfibre wipes clean quickly after rainy mornings.',
+    isSample: true,
+    status: 'published',
+    createdAt: '2026-10-15T10:00:00.000Z',
+  },
+  {
+    id: 'rev-sample-2',
+    productId: 'prod-girls-black',
+    productName: "Girls' Black Mary Jane School Shoe",
+    authorName: 'Rajeshwari Nair (Sample)',
+    city: 'Kochi',
+    rating: 5,
+    comment:
+      'Sample feedback preview: The single adjustable strap stays secure during school hours and the quick-dry lining is practical for humid monsoon weather.',
+    isSample: true,
+    status: 'published',
+    createdAt: '2026-10-18T11:30:00.000Z',
+  },
+  {
+    id: 'rev-sample-3',
+    productId: 'prod-white-pe',
+    productName: 'Unisex White PE School Shoe',
+    authorName: 'Vikramjit Gill (Sample)',
+    city: 'Chandigarh',
+    rating: 4,
+    comment:
+      'Sample feedback preview: Clean uniform look for PT days with easy strap fastening, good outsole grip, and cushioned feel for playground activities.',
+    isSample: true,
+    status: 'published',
+    createdAt: '2026-10-22T09:15:00.000Z',
+  },
+];
+
+const DEFAULT_COUPONS: Coupon[] = [
+  {
+    id: 'cpn-1',
+    code: 'WELCOME100',
+    discountType: 'flat',
+    discountValue: 100,
+    minOrderAmount: 999,
+    isActive: true,
+  },
+  {
+    id: 'cpn-2',
+    code: 'MONSOON10',
+    discountType: 'percent',
+    discountValue: 10,
+    minOrderAmount: 1200,
+    isActive: true,
+  },
+];
+
+function createDefaultDb(): DatabaseSchema {
+  return {
+    seedVersion: CURRENT_SEED_VERSION,
+    adminPasswordHash: null,
+    products: DEFAULT_PRODUCTS,
+    customers: [],
+    orders: [],
+    payments: [],
+    reviews: DEFAULT_REVIEWS,
+    coupons: DEFAULT_COUPONS,
+    returnRequests: [],
+    newsletterSubscribers: [],
+    contactSubmissions: [],
+    config: DEFAULT_CONFIG,
+  };
+}
+
+export function loadDb(): DatabaseSchema {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(DB_PATH)) {
+    const seeded = createDefaultDb();
+    saveDb(seeded);
+    return seeded;
+  }
+  try {
+    const raw = fs.readFileSync(DB_PATH, 'utf-8');
+    const parsed = JSON.parse(raw) as Partial<DatabaseSchema>;
+    const defaults = createDefaultDb();
+    const needsSeedMigration = (parsed.seedVersion ?? 1) < CURRENT_SEED_VERSION;
+    const db: DatabaseSchema = {
+      ...defaults,
+      ...parsed,
+      seedVersion: CURRENT_SEED_VERSION,
+      config: needsSeedMigration
+        ? defaults.config
+        : { ...defaults.config, ...(parsed.config ?? {}) },
+      products: needsSeedMigration
+        ? defaults.products
+        : parsed.products?.length
+          ? parsed.products
+          : defaults.products,
+      coupons: parsed.coupons ?? defaults.coupons,
+      reviews: needsSeedMigration
+        ? defaults.reviews
+        : parsed.reviews ?? defaults.reviews,
+      customers: parsed.customers ?? [],
+      orders: parsed.orders ?? [],
+      payments: parsed.payments ?? [],
+      returnRequests: parsed.returnRequests ?? [],
+      newsletterSubscribers: parsed.newsletterSubscribers ?? [],
+      contactSubmissions: parsed.contactSubmissions ?? [],
+    };
+    if (needsSeedMigration) {
+      saveDb(db);
+    }
+    return db;
+  } catch {
+    const seeded = createDefaultDb();
+    saveDb(seeded);
+    return seeded;
+  }
+}
+
+export function saveDb(db: DatabaseSchema): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  const tmpPath = `${DB_PATH}.tmp`;
+  fs.writeFileSync(tmpPath, JSON.stringify(db, null, 2), 'utf-8');
+  fs.renameSync(tmpPath, DB_PATH);
+}

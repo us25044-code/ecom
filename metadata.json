@@ -1,0 +1,6 @@
+{
+  "name": "GrowStep — Adaptive School Footwear",
+  "description": "School shoes designed to adapt to growing feet, withstand everyday school wear and handle Indian monsoon conditions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
